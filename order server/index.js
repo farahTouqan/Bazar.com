@@ -3,6 +3,7 @@ const app = express();
 const fs = require('fs');
 const csv = require('csv-parser');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const http = require('http');
 
 const PORT = process.env.PORT || 4000;
 const catalog = [];
@@ -13,10 +14,9 @@ const orderCsvWriter = createCsvWriter({
         { id: 'itemName', title: 'ItemName' },
         { id: 'itemPrice', title: 'ItemPrice' },
     ],
-    append: true, 
+    append: true,
 });
-let orderIdCounter = 1; 
-
+let orderIdCounter = 1;
 
 fs.createReadStream('order.csv')
     .pipe(csv())
@@ -57,34 +57,52 @@ app.get('/CATALOG_WEBSERVICE_IP/buy/:itemID', (req, response) => {
         return response.status(404).send('Item not found');
     }
 
-    const order = {
-        orderId: orderIdCounter,
-        itemName: item.title,
-        itemPrice: item.price,
-    };
-    orderIdCounter++;
+    const data = [];
 
-    item.quantity--;
-    const csvWriter = createCsvWriter({
-        path: 'catalog.csv',
-        header: [
-            { id: 'id', title: 'id' },
-            { id: 'price', title: 'price' },
-            { id: 'title', title: 'title' },
-            { id: 'quantity', title: 'quantity' },
-            { id: 'topic', title: 'topic' }
-        ]
-    });
-    csvWriter
-        .writeRecords(catalog)
-        .then(() => console.log(''));
-
-    orderCsvWriter
-        .writeRecords([order])
-        .then(() => {
-            console.log('Order placed:', order);
-            return response.json(order);
+   
+    http.get(`http://localhost:4000/CATALOG_WEBSERVICE_IP/put/${req.params.itemNUM}`, (res) => {
+        res.on('data', (chunk) => {
+            data.push(chunk);
         });
+
+        res.on('end', () => {
+            if (data.toString() === "0") {
+                return response.status(404).send("0");
+            }
+
+            const order = {
+                orderId: orderIdCounter,
+                itemName: item.title,
+                itemPrice: item.price,
+            };
+            orderIdCounter++;
+
+            item.quantity--;
+            const csvWriter = createCsvWriter({
+                path: 'catalog.csv',
+                header: [
+                    { id: 'id', title: 'id' },
+                    { id: 'price', title: 'price' },
+                    { id: 'title', title: 'title' },
+                    { id: 'quantity', title: 'quantity' },
+                    { id: 'topic', title: 'topic' }
+                ]
+            });
+            csvWriter
+                .writeRecords(catalog)
+                .then(() => console.log(''));
+
+            orderCsvWriter
+                .writeRecords([order])
+                .then(() => {
+                    console.log('Order placed:', order);
+                    return response.json(order);
+                });
+        });
+    })
+    .on('error', (error) => {
+        console.log(error);
+    });
 });
 
 app.listen(PORT, () => {
