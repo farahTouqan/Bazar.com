@@ -13,11 +13,11 @@ const orderCsvWriter = createCsvWriter({
         { id: 'itemName', title: 'ItemName' },
         { id: 'itemPrice', title: 'ItemPrice' },
     ],
-    append: true, // Append data to the file
+    append: true, 
 });
-let orderIdCounter = 1; // Default initial value
+let orderIdCounter = 1; 
 
-// Read the order.csv file to find the maximum order ID
+
 fs.createReadStream('order.csv')
     .pipe(csv())
     .on('data', (row) => {
@@ -28,13 +28,11 @@ fs.createReadStream('order.csv')
     })
     .on('end', () => {
         console.log('Initial orderIdCounter:', orderIdCounter);
-        // You can now use orderIdCounter with the updated initial value.
     })
     .on('error', (error) => {
         console.error(error);
     });
 
-// Read items from the catalog.csv file
 fs.createReadStream('catalog.csv')
     .pipe(csv({ columns: true }))
     .on('data', (data) => {
