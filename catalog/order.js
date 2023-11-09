@@ -59,7 +59,7 @@ app.get('/CATALOG_WEBSERVICE_IP/buy/:itemID', (req, response) => {
 
     const data = [];
 
-    // Add http.get part
+   
     http.get(`http://localhost:4000/CATALOG_WEBSERVICE_IP/put/${req.params.itemNUM}`, (res) => {
         res.on('data', (chunk) => {
             data.push(chunk);
